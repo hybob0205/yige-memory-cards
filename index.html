@@ -29,6 +29,7 @@
     const KEY='yige-ipad-v1';
     const DAILY_LIMIT=30;
     const MARKJI_TOTAL=2299;
+    const MARKJI_SUBJECTS=['马原','史纲','其他','毛中特','新思想','思法','时政','未分科'];
     const samples=[
       {deck:'试用卡组',front:'间隔重复的核心是什么？',back:'在记忆即将变淡时再次回忆，让每次复习都发生在更合适的时间。',tags:'示例'},
       {deck:'试用卡组',front:'回忆一张卡片时，应该先做什么？',back:'先主动回忆，再翻面核对。看着答案点头不等于真正记住。',tags:'示例'},
@@ -49,6 +50,8 @@
     let view='home',filterDeck='',queue=[],current=null,revealed=false,noticeTimer,sessionTotal=0,sessionDone=0,cardQuery='',cardDeckFilter='',cardPage=0,editingCardId='';
     const $=(s)=>document.querySelector(s), content=$('#content');
     const save=()=>{if(!canStore){toast('此打开方式无法保存浏览器数据，请改用局域网网址或定期导出备份。');return false}try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch{toast('保存失败：浏览器存储空间可能已满，请先导出备份。');return false}};
+    function migrateMarkjiDecks(){const marker=KEY+'-split-decks-v1';try{if(localStorage.getItem(marker)==='1')return}catch{return}let changed=false;for(const card of data.cards){if(!MARKJI_SUBJECTS.includes(card.deck))continue;const tags=String(card.tags||'');const group=tags.includes('知识点')?'知识点':(tags.includes('单选')||tags.includes('多选'))?'选择题':'';if(group){card.deck+=`·${group}`;changed=true}}if(changed){const decks=new Set(data.decks.filter(deck=>!MARKJI_SUBJECTS.includes(deck)));data.cards.forEach(card=>decks.add(card.deck));data.decks=[...decks];if(!save())return}try{localStorage.setItem(marker,'1')}catch{}}
+    migrateMarkjiDecks();
     function toast(message){const n=$('#notice');n.textContent=message;n.classList.remove('hidden');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.classList.add('hidden'),2800)}
     function dueCards(deck=''){return data.cards.filter(c=>(!deck||c.deck===deck)&&(!c.due||c.due<=today()))}
     function showView(next){view=next;filterDeck='';document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===next));if(next==='study'&&current)renderStudy();else render()}
